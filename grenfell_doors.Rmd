@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 
 library(tidyverse)
+library(scales)
 ```
 
 # Objective
@@ -25,7 +26,9 @@ I have drawn heavily from data scientist David Robinson's screencasts, which are
 
 ```{r simulation}
 set.seed(20210601)
+
 # create the simulation dataframe - 1,000,000 trials
+
 doors <- crossing(trials = 1:1000000,
                   door_check = 1:126) %>% 
   mutate(compliant = sample(c(TRUE, FALSE),
@@ -37,6 +40,22 @@ doors %>%
   filter(door_check <= 7) %>% 
   group_by(trials) %>% 
   summarise(first_seven_compliant = all(compliant)) %>%
-  count(first_seven_compliant)
+  count(first_seven_compliant) -> sim_counts
+
+sim_counts$n[2]/sim_counts$n[1] -> sim_prob
 ```
-In this simulation of a million trials, the first seven doors were **all** compliant 809 times, so a 0.081% chance of this happening.
+In this simulation of a million trials, the first seven doors were **all** compliant roughly 800 times, so a 0.08% chance of this happening. The actual value for this run was `r sim_prob`, but will vary due to the random sampling process.
+
+
+Now to tackle the calculation method....!
+
+## Calculation
+
+This problem is equivalent to drawing marbles from a bag without replacement.
+
+```{r calculation-solution}
+compliant = ceiling(0.36 * 126)
+
+(compliant/126) * ((compliant - 1)/125)* ((compliant - 2)/124)* ((compliant - 3)/123)* ((compliant - 4)/122)* ((compliant - 5)/121)* ((compliant - 6)/120) -> calc_prob
+```
+The resultant answer is `r calc_prob`, which is slightly less than the `r sim_prob` obtained via simulation. Looking back at the simulation attempt, it seems like it might be an overestimate of the probability and I think this might be because the simulation doesn't account for the diminishing probability for each successive door - i.e. the "non-replacement" element of the draw.
