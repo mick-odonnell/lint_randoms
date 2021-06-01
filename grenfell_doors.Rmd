@@ -1,0 +1,42 @@
+---
+title: "Grenfell_Door_Closers"
+author: "Mick O Donnell"
+date: "6/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+
+library(tidyverse)
+```
+
+# Objective
+
+This document outlines the process required to check whether an assertion made during the Grenfell Tower Inquiry is reasonable - in order to do this, it is necessary to create a logical statement or hypothesis which we can check. There are two approaches that can be used, one via simulation and one via calculation. I will start with the former, as I have no idea as yet how to tackle the latter!
+
+> What is the likellihood that a random sample of 7 doors from a population of 126 doors would show no defects, given that the overall defect level is 64%?
+
+## Simulation
+
+To simulate this situation, we will create a vector of 126 numbers, each of which is a random number between 0 and 1. We will then sample the first seven numbers repeatedly to see what proportion of these has no defects - a defect for any given door has a chance of 0.64.
+
+I have drawn heavily from data scientist David Robinson's screencasts, which are excellent - [here](https://www.youtube.com/watch?v=pBGMt28xgvk&t=1340s)
+
+```{r simulation}
+set.seed(20210601)
+# create the simulation dataframe - 1,000,000 trials
+doors <- crossing(trials = 1:1000000,
+                  door_check = 1:126) %>% 
+  mutate(compliant = sample(c(TRUE, FALSE),
+                            prob = c(0.36, 0.64),
+                            replace = TRUE,
+                            n()))
+
+doors %>% 
+  filter(door_check <= 7) %>% 
+  group_by(trials) %>% 
+  summarise(first_seven_compliant = all(compliant)) %>%
+  count(first_seven_compliant)
+```
+In this simulation of a million trials, the first seven doors were **all** compliant 809 times, so a 0.081% chance of this happening.
